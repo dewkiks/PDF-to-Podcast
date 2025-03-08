@@ -10,12 +10,14 @@ class PDFState(TypedDict):
     pdf_content: str
     outline: str
     structured_outline: str
+    podcast_dialog: str
 
 class Agent:
     def __init__(self, model):
         
         self.model = model
         graph = StateGraph(PDFState)
+
         graph.add_node("create_outline", self.create_outline)
         graph.add_node("create_structured_outline", self.create_structured_outline)
         graph.add_edge("create_structured_outline", END)
@@ -23,6 +25,14 @@ class Agent:
         graph.set_entry_point("create_outline")
         self.graph = graph.compile()
 
+        graph.add_node("outline", self.create_outline)
+        graph.add_node("structured_outline", self.create_structured_outline)
+        graph.add_node("podcast_dialog", self.generate_podcast_dialog)
+        graph.add_edge("structured_outline", END)
+        graph.add_edge("outline", "structured_outline")
+        graph.add_edge("revision","podcast_dialog")
+        graph.compile()
+        
     def create_outline(self, state: PDFState):
         print("Creating Outline")
         prompt = f"""
