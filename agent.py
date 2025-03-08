@@ -10,7 +10,7 @@ class PDFState(TypedDict):
     pdf_content: AnyMessage
     outline: AnyMessage
     structured_outline: AnyMessage
-    podcast_dialog: AnyMessage
+    segment_transcript: AnyMessage
 
 class Agent:
     def __init__(self, model):
@@ -20,8 +20,10 @@ class Agent:
 
         graph.add_node("create_outline", self.create_outline)
         graph.add_node("create_structured_outline", self.create_structured_outline)
-        graph.add_edge("create_structured_outline", END)
+        graph.add_node("create_segment_transcript", self.create_segment_transcript)
         graph.add_edge("create_outline", "create_structured_outline")
+        graph.add_edge("create_structured_outline", "create_segment_transcript")
+        graph.add_edge("create_segment_transcript", END)
         graph.set_entry_point("create_outline")
         self.graph = graph.compile()
         
@@ -58,12 +60,39 @@ class Agent:
                 2) Main Segment
                 3) transition
                 4) Conclusion
-            Expected Output: A conversion plan that organizes content for spoken delivery
+            Expected Output: A conversion plan that organizes content for spoken delivery.
 
             The content: <{outline_content}>.
+
+            Make sure to only include the outline. Do not include any other data like "here is your.." and any other stuff like that.
         """
         result = self.llm(prompt)
         return {'structured_outline': result}
+    
+    def create_segment_transcript(self, state: PDFState):
+        segment_content = state['structured_outline']
+        if hasattr(segment_content, 'content'):
+            segment_content = segment_content.content
+        
+        prompt = f"""
+            You are an expert at creating transcripts based on based on segments provided.
+            So you will be provided different segments you have to convert each segment into natural sounding spoken language and add more detail for each segment.
+            When you recive the structured outline for a conversation you have to analyse the contents think deeply and create a well structured result for each segments.
+            So from the provided data look into each segments and for each segments you should convert it into a natural sounding spoke language, add more detail, match the style of a podcast between 2 people.
+            Your output should look like this:
+            example:
+                Person 1: "Hello listeners, and welcome to today's episode! Have you ever wondered ..."
+                Person 2: "I'm really excited about this topic. Most people have heard ..."
+
+            The content is provided between the angle brackets.
+
+            The content: <{segment_content}>
+
+            Make sure to only add the result. No extra text like "Here is your.. " or "here you go .." no need of such texts before the result.
+        """
+
+        result = self.llm(prompt)
+        return {'segment_transcript': result}
 
     def llm(self, prompt):
         # Check if prompt is already a message object - use base class instead of subscripted generic
@@ -90,7 +119,7 @@ def main():
     result = agent.graph.invoke({'pdf_content': content})
     
     # Print the content of the message
-    structured_outline = result['structured_outline'].content if hasattr(result['structured_outline'], 'content') else result['structured_outline']
-    print(structured_outline)
+    result = result['segment_transcript'].content if hasattr(result['segment_transcript'], 'content') else result['segment_transcript']
+    print(result)
 
 main()
