@@ -30,11 +30,8 @@ class PdfRead:
                 # extracting text from page
                 self.text += page.extract_text()
 
-    def get_text(self):
-        return self.text
+    def get_text(self) -> str:
+        return str(self.text)
 
 
 
-
-# pdfR = PdfRead("PDF's/dbms.pdf")
-# print(pdfR.get_text())

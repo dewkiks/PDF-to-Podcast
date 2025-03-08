@@ -24,14 +24,6 @@ class Agent:
         graph.add_edge("create_outline", "create_structured_outline")
         graph.set_entry_point("create_outline")
         self.graph = graph.compile()
-
-        graph.add_node("outline", self.create_outline)
-        graph.add_node("structured_outline", self.create_structured_outline)
-        graph.add_node("podcast_dialog", self.generate_podcast_dialog)
-        graph.add_edge("structured_outline", END)
-        graph.add_edge("outline", "structured_outline")
-        graph.add_edge("revision","podcast_dialog")
-        graph.compile()
         
     def create_outline(self, state: PDFState):
         print("Creating Outline")
@@ -64,6 +56,7 @@ class Agent:
             The content: <{state['outline']}>.
 
         """
+        prompt = HumanMessage(prompt)
         state['structured_outline'] = self.llm(prompt)
 
     def llm(self, prompt):
@@ -75,8 +68,10 @@ def main():
         model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
         together_api_key="84e8df9a595039765758ae96105665d37e873e9619a2c209ee31a108db5875ef"
     )
-    content = PdfRead("PDF's/dbms.pdf")
+    pdf = PdfRead("PDF's/dbms.pdf")
+    content = pdf.get_text()
     agent = Agent(llm)
+    print(type(content))
     content = HumanMessage(content)
     result = agent.graph.invoke({'pdf_content': content})
     print(result['structured_outline'])
