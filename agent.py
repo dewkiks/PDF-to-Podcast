@@ -5,14 +5,22 @@ from langchain_core.messages import HumanMessage, SystemMessage, AnyMessage
 from langchain_together import ChatTogether
 
 from util import PdfRead
-from elevenlabs.client import ElevenLabs
-from elevenlabs import VoiceSettings
+# from elevenlabs.client import ElevenLabs
+# from elevenlabs import VoiceSettings
 import uuid
 
-client = ElevenLabs(
-  api_key='sk_f7481f225665225959deca3089ab06ee9b805abeb08c9737'
-)
+import torch
+from parler_tts import ParlerTTSForConditionalGeneration
+from transformers import AutoTokenizer
+import soundfile as sf
 
+
+
+# client = ElevenLabs(
+#   api_key='sk_f7481f225665225959deca3089ab06ee9b805abeb08c9737'
+# )
+
+model = ParlerTTSForConditionalGeneration
 
 class PDFState(TypedDict):
     pdf_content: AnyMessage
@@ -20,6 +28,11 @@ class PDFState(TypedDict):
     structured_outline: AnyMessage
     segment_transcript: AnyMessage
     deep_dive: AnyMessage
+    transcript: AnyMessage 
+    podcast_dialogue: AnyMessage
+    outline_fusion: AnyMessage
+    revision_content: AnyMessage
+    genpodcast_dialogue: AnyMessage
 
 class Agent:
     def __init__(self, model):
@@ -37,11 +50,30 @@ class Agent:
         graph.add_node("create_deep_dive", self.create_deep_dive)
         graph.add_edge("create_segment_transcript", "create_deep_dive")
 
-        graph.add_edge("create_deep_dive", END)
+        # graph.add_edge("create_deep_dive", END)
+        # graph.set_entry_point("create_outline")
+
+        graph.add_node("transcript_optimization", self.transcript_optimization) #prompt 5
+        graph.add_edge("create_deep_dive","transcript_optimization")
+
+        graph.add_node("create_podcast_dialogue", self.create_podcast_dialog) #podcast dialogue creation prompt 6
+        graph.add_edge("transcript_optimization","create_podcast_dialogue") #transcript opt -> create pod dialogue
+
+        graph.add_node("create_outline_fusion",self.create_outline_fusion) #prompt 7
+        graph.add_edge("create_podcast_dialogue","create_outline_fusion") #create podcast dialogue->outline fusion
+
+        graph.add_node("create_revision", self.create_revision) #revision prompt 8
+        graph.add_edge("create_outline_fusion","create_revision") #outline_fusion-> revision
+
+        graph.add_node("structured_podcast_dialog", self.structured_podcast_dialog) #podcast prompt 9
+        graph.add_edge("create_revision","structured_podcast_dialog") #revision->podcast
+
+        graph.add_edge("structured_podcast_dialog", END)
         graph.set_entry_point("create_outline")
 
         self.graph = graph.compile()
-        
+    
+    
     def create_outline(self, state: PDFState):
         print("Creating Outline")
         # Get the content in a safer way
@@ -130,6 +162,149 @@ class Agent:
         result = self.llm(prompt)
         return {'deep_dive': result}
     
+    def transcript_optimization(self, state:PDFState):
+        transcript_content= state['deep_dive']
+        if hasattr(transcript_content, 'content'):
+            transcript_content = transcript_content.content
+
+        prompt = f"""
+                You are an expert in content refinement and podcast script optimization. Your role is to improve the clarity, coherence, and engagement of the provided podcast transcript.  
+
+                Objectives:  
+                - Enhance readability & flow: Ensure smooth transitions between topics and speakers.  
+                - Remove redundancy: Eliminate unnecessary repetition while preserving meaning.  
+                - Improve clarity: Reword complex or awkward sentences for better understanding.  
+                - Enhance engagement: Add slight conversational adjustments to make the dialogue more dynamic and engaging.  
+                - Maintain speaker style: Keep the natural tone and personality of each speaker intact.  
+
+                Expected Output:  
+                A refined and optimized podcast transcript that flows naturally, engages the listener, and keeps the conversation structured without losing its authenticity.  
+
+                Content to Optimize:  
+                <{transcript_content}>  
+
+                Output Format:  
+                - Maintain the same dialogue format (`[Host]:`, `[Guest]:`).  
+                - Ensure the final transcript is polished and ready for production.  
+
+                Only provide the optimized transcript—no additional commentary or explanations.  
+                """
+        result = self.llm(prompt)
+        return {'transcript':result}
+    
+    def create_podcast_dialog(self, state: PDFState):
+        podcast_content = state ['transcript']
+        if hasattr(podcast_content, 'content'):
+            podcast_content = podcast_content.content 
+        prompt = f"""
+
+                this is the transcript content you should work with <{podcast_content}>
+
+                You are an expert in podcast scriptwriting and conversational structuring. Your task is to take the provided transcript and turn it into a highly engaging, natural-sounding podcast dialogue between two speakers.
+
+                Objectives:
+                Ensure Conversational Flow: Transform the transcript into a fluid, engaging discussion between two hosts.
+                Add Personality & Tone: Make the dialogue sound lively, with a friendly, professional, and engaging tone.
+                Smooth Transitions: Ensure natural progression from one topic to another.
+                Increase Engagement: Include rhetorical questions, relatable anecdotes, or humor where appropriate.
+                Maintain Clarity: Keep explanations precise and digestible for listeners.
+                Expected Format:
+                The podcast should be structured as follows:
+
+                Introduction - Briefly introduce the topic, set expectations, and engage the audience.
+                Main Discussion - Dive into key insights from the transcript in a back-and-forth conversation.
+                Transitions - Ensure seamless topic changes without abrupt jumps.
+                Conclusion - Summarize key takeaways and invite further engagement 
+                
+                only output the raw result. do not include any other data
+                """
+        result = self.llm(prompt)
+        return {'podcast_dialogue': result}
+    
+    def create_outline_fusion(self, state: PDFState):
+        outline_content = state ['podcast_dialogue']
+        if hasattr(outline_content, 'content'):
+            outline_content = outline_content.content 
+        prompt = f"""
+
+                this is the transcript content you should work with <{outline_content}>
+
+                You are an expert in podcast scriptwriting and conversational structuring. Your task is to take the provided transcript and turn it into a highly engaging, natural-sounding podcast dialogue between two speakers.
+
+                Objectives:
+                Ensure Conversational Flow: Transform the transcript into a fluid, engaging discussion between two hosts.
+                Add Personality & Tone: Make the dialogue sound lively, with a friendly, professional, and engaging tone.
+                Smooth Transitions: Ensure natural progression from one topic to another.
+                Increase Engagement: Include rhetorical questions, relatable anecdotes, or humor where appropriate.
+                Maintain Clarity: Keep explanations precise and digestible for listeners.
+                Expected Format:
+                The podcast should be structured as follows:
+
+                Introduction - Briefly introduce the topic, set expectations, and engage the audience.
+                Main Discussion - Dive into key insights from the transcript in a back-and-forth conversation.
+                Transitions - Ensure seamless topic changes without abrupt jumps.
+                Conclusion - Summarize key takeaways and invite further engagement 
+                
+                only output the raw result. do not include any other data
+                """
+        result = self.llm(prompt)
+        return {'outline_fusion': result}
+    
+    def create_revision(self, state:PDFState):
+                outline_fusion_content = state ['outline_fusion']
+                if hasattr(outline_fusion_content, 'content'):
+                    outline_fusion_content = outline_fusion_content.content 
+                prompt = f"""
+                        You are an expert podcast editor. Refine the podcast dialogue using the structured outline to ensure clarity, coherence, and engagement.
+
+                        Requirements:
+                        - Improve flow, making the conversation **more natural and engaging**.
+                        - Ensure key topics follow the structured outline.
+                        - Maintain humor and conversational tone.
+                        - Add minor improvements for storytelling.
+
+                        The content: <{outline_fusion_content}> 
+
+                        Only provide the optimized transcript—no additional commentary or explanations.  
+                        """
+                result = self.llm(prompt)
+                return {'revision_content': result}
+    
+    def structured_podcast_dialog(self, state: PDFState):
+        revision_content = state ['revision_content']
+        if hasattr(revision_content, 'content'):
+            revision_content = revision_content.content 
+        prompt = f"""
+                Podcast Script Generation
+                You are an expert podcast scriptwriter. Your task is to take the refined podcast dialogue and transform it into a final, polished podcast script that is ready for production.
+
+                Objectives:
+                Ensure Broadcast Readiness: The final output should sound professional and engaging, as if recorded for a real podcast.
+                Enhance Flow & Delivery: Adjust pacing, sentence structure, and transitions for a smooth listening experience.
+                Add Sound Cues & Pauses: Include [music fades in], [dramatic pause], or [laughter] to make the script more dynamic.
+                Keep it Conversational: Maintain a lively, natural, and engaging tone between the hosts.
+                Structure for Production: Make it easy to read aloud with clear formatting.
+
+                [Podcast Intro Music Fades In]  
+                [Host 1]: "Welcome back to *Deep Dive Talks*! Today, we’re diving into [topic]—a subject that has more depth than most people realize."  
+                [Host 2]: "[chuckles] That’s right! Did you know that [interesting fact]? It’s one of those things that once you learn, you’ll never see the same way again."  
+                [Host 1]: "Let’s start by breaking it down. [Core concept explanation]."  
+                [Host 2]: "[Pause] Exactly! And what’s really interesting is that… [Example or Story]."  
+                ...  
+                [Host 1]: "Alright, let’s wrap things up. Today we covered [key takeaways]."  
+                [Host 2]: "Thanks for tuning in! Don’t forget to subscribe and share if you found this useful!"  
+                [Outro Music Fades Out]  
+
+                don't include un
+
+                The content: <{revision_content}> 
+
+                Only provide the optimized transcript—no additional commentary or explanations.  
+                """
+        result = self.llm(prompt)
+        return {'genpodcast_dialogue': result}
+
+        
     def llm(self, prompt):
         # Check if prompt is already a message object - use base class instead of subscripted generic
         if not isinstance(prompt, (dict, str)) and hasattr(prompt, 'content'):
@@ -142,34 +317,20 @@ class Agent:
         # Make sure we're invoking with the right format for Together AI
         return self.model.invoke([message])
     
-def text_to_speech_file(text: str) -> str:
-    # Calling the text_to_speech conversion API with detailed parameters
-    response = client.text_to_speech.convert(
-        voice_id="pNInz6obpgDQGcFmaJgB", # Adam pre-made voice
-        output_format="mp3_22050_32",
-        text=text,
-        model_id="eleven_turbo_v2_5", # use the turbo model for low latency
-        # Optional voice settings that allow you to customize the output
-        voice_settings=VoiceSettings(
-            stability=0.0,
-            similarity_boost=1.0,
-            style=0.0,
-            use_speaker_boost=True,
-            speed=1.0,
-        ),
-    )
-    # uncomment the line below to play the audio back
-    # play(response)
-    # Generating a unique file name for the output MP3 file
-    save_file_path = f"{uuid.uuid4()}.mp3"
-    # Writing the audio to a file
-    with open(save_file_path, "wb") as f:
-        for chunk in response:
-            if chunk:
-                f.write(chunk)
-    print(f"{save_file_path}: A new audio file was saved successfully!")
-    # Return the path of the saved audio file
-    return save_file_path
+# def text_to_speech_file(text: str) -> str:
+#     audio_path = text_to_speech(text, "mysterious.wav")
+#     # uncomment the line below to play the audio back
+#     # play(response)
+#     # Generating a unique file name for the output MP3 file
+#     save_file_path = f"{uuid.uuid4()}.mp3"
+#     # Writing the audio to a file
+#     with open(save_file_path, "wb") as f:
+#         for chunk in response:
+#             if chunk:
+#                 f.write(chunk)
+#     print(f"{save_file_path}: A new audio file was saved successfully!")
+#     # Return the path of the saved audio file
+#     return save_file_path
         
 def main():
     llm = ChatTogether(
@@ -183,10 +344,11 @@ def main():
     # Start with a simple string, not a message object
     result = agent.graph.invoke({'pdf_content': content})
     
-    state = 'deep_dive'
+    state = 'genpodcast_dialogue'
     # Print the content of the message
     result = result[state].content if hasattr(result[state], 'content') else result[state]
-    # print(result)
-    text_to_speech_file(result)
+    print(result)
+    # audio_path = text_to_speech(result)
+    # text_to_speech_file(result)
 
 main()
