@@ -4,7 +4,7 @@ from langgraph.graph import StateGraph, END
 from langchain_core.messages import HumanMessage, SystemMessage, AnyMessage
 from langchain_together import ChatTogether
 from util import PdfRead
-
+from util import audio_generate
 
 
 class PDFState(TypedDict):
@@ -302,21 +302,7 @@ class Agent:
         # Make sure we're invoking with the right format for Together AI
         return self.model.invoke([message])
     
-# def text_to_speech_file(text: str) -> str:
-#     audio_path = text_to_speech(text, "mysterious.wav")
-#     # uncomment the line below to play the audio back
-#     # play(response)
-#     # Generating a unique file name for the output MP3 file
-#     save_file_path = f"{uuid.uuid4()}.mp3"
-#     # Writing the audio to a file
-#     with open(save_file_path, "wb") as f:
-#         for chunk in response:
-#             if chunk:
-#                 f.write(chunk)
-#     print(f"{save_file_path}: A new audio file was saved successfully!")
-#     # Return the path of the saved audio file
-#     return save_file_path
-        
+
 def main():
     llm = ChatTogether(
         model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
@@ -333,7 +319,7 @@ def main():
     # Print the content of the message
     result = result[state].content if hasattr(result[state], 'content') else result[state]
     print(result)
-    # audio_path = text_to_speech(result)
-    # text_to_speech_file(result)
+    audio_generate(result)
+
 
 main()
