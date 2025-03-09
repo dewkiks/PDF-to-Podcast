@@ -3,24 +3,9 @@ import operator
 from langgraph.graph import StateGraph, END
 from langchain_core.messages import HumanMessage, SystemMessage, AnyMessage
 from langchain_together import ChatTogether
-
 from util import PdfRead
-# from elevenlabs.client import ElevenLabs
-# from elevenlabs import VoiceSettings
-import uuid
-
-import torch
-from parler_tts import ParlerTTSForConditionalGeneration
-from transformers import AutoTokenizer
-import soundfile as sf
 
 
-
-# client = ElevenLabs(
-#   api_key='sk_f7481f225665225959deca3089ab06ee9b805abeb08c9737'
-# )
-
-model = ParlerTTSForConditionalGeneration
 
 class PDFState(TypedDict):
     pdf_content: AnyMessage
