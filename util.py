@@ -52,17 +52,48 @@ class PdfRead:
 
 def audio_generate(script):
     script = script.replace("\n", " ").strip()
+    speaker_lookup = {"Alex": "v2/en_speaker_6", "Sam": "v2/en_speaker_2"}
+    
     sentences = nltk.sent_tokenize(script)
-
-    SPEAKER = "v2/en_speaker_6"
     silence = np.zeros(int(0.25 * SAMPLE_RATE))  # quarter second of silence
 
     pieces = []
     for sentence in sentences:
+        SPEAKER = speaker_lookup[sentence[0].split(":")[0]]
+        print(SPEAKER)
         audio_array = generate_audio(sentence, history_prompt=SPEAKER)
         pieces += [audio_array, silence.copy()]
 
 
-    write_wav("bark_generation_myfunc.wav", SAMPLE_RATE, np.concatenate(pieces))
+    write_wav("multi_host.wav", SAMPLE_RATE, np.concatenate(pieces))
 
-# audio_generate(script)
+
+def create_audio(script):
+    print("Starting Audio generation...")
+    script = script.strip().split("\n")
+    speaker_lookup = {"Alex": "v2/en_speaker_6", "Sam": "v2/en_speaker_3"}
+    host_line_count = {"Alex": 0, "Sam": 0}
+    silence = np.zeros(int(0.25 * SAMPLE_RATE))  # quarter second of silence
+    pieces = []
+    for line in script:
+        if line and not line.startswith("**"):
+            host_name = line.split(":")[0]
+            if host_name in speaker_lookup:
+                host_line_count[host_name] += 1
+                SPEAKER = speaker_lookup[host_name]
+                print(f"Processing {host_name}'s #{host_line_count[host_name]} line:")
+            else:
+                SPEAKER = "v2/en_speaker_6"
+                print(f"Processing additional line:")
+
+            line = line.split(":").pop(1)
+            sentences = nltk.sent_tokenize(line)
+            for sentence in sentences:
+                audio_array = generate_audio(sentence, history_prompt=SPEAKER)
+                pieces += [audio_array, silence.copy()]
+    
+    write_wav("multi_host.wav", SAMPLE_RATE, np.concatenate(pieces))
+
+
+
+# create_audio(script)

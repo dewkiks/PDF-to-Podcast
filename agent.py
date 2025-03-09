@@ -4,7 +4,7 @@ from langgraph.graph import StateGraph, END
 from langchain_core.messages import HumanMessage, SystemMessage, AnyMessage
 from langchain_together import ChatTogether
 from util import PdfRead
-from util import audio_generate
+from util import create_audio
 
 
 class PDFState(TypedDict):
@@ -60,7 +60,7 @@ class Agent:
     
     
     def create_outline(self, state: PDFState):
-        print("Creating Outline")
+        print("Generating Outline")
         # Get the content in a safer way
         pdf_content = state['pdf_content']
         if hasattr(pdf_content, 'content'):
@@ -80,6 +80,7 @@ class Agent:
         return {'outline': result}
 
     def create_structured_outline(self, state: PDFState):
+        print("Generating Structured Outline")
         outline_content = state['outline']
         if hasattr(outline_content, 'content'):
             outline_content = outline_content.content
@@ -102,6 +103,7 @@ class Agent:
         return {'structured_outline': result}
     
     def create_segment_transcript(self, state: PDFState):
+        print("Generating Segment Transcript")
         segment_content = state['structured_outline']
         if hasattr(segment_content, 'content'):
             segment_content = segment_content.content
@@ -127,6 +129,8 @@ class Agent:
         return {'segment_transcript': result}
     
     def create_deep_dive(self, state: PDFState):
+        print("Creating a Deep Dive")
+
         deep_content = state['segment_transcript']
         if hasattr(deep_content, 'content'):
             deep_content = deep_content.content
@@ -148,6 +152,8 @@ class Agent:
         return {'deep_dive': result}
     
     def transcript_optimization(self, state:PDFState):
+        print("Optimizing Transcript")
+
         transcript_content= state['deep_dive']
         if hasattr(transcript_content, 'content'):
             transcript_content = transcript_content.content
@@ -178,6 +184,7 @@ class Agent:
         return {'transcript':result}
     
     def create_podcast_dialog(self, state: PDFState):
+        print("Generating podcast dialog's")
         podcast_content = state ['transcript']
         if hasattr(podcast_content, 'content'):
             podcast_content = podcast_content.content 
@@ -207,6 +214,7 @@ class Agent:
         return {'podcast_dialogue': result}
     
     def create_outline_fusion(self, state: PDFState):
+        print("Creating an outline")
         outline_content = state ['podcast_dialogue']
         if hasattr(outline_content, 'content'):
             outline_content = outline_content.content 
@@ -236,26 +244,27 @@ class Agent:
         return {'outline_fusion': result}
     
     def create_revision(self, state:PDFState):
-                outline_fusion_content = state ['outline_fusion']
-                if hasattr(outline_fusion_content, 'content'):
-                    outline_fusion_content = outline_fusion_content.content 
-                prompt = f"""
-                        You are an expert podcast editor. Refine the podcast dialogue using the structured outline to ensure clarity, coherence, and engagement.
+        outline_fusion_content = state ['outline_fusion']
+        if hasattr(outline_fusion_content, 'content'):
+            outline_fusion_content = outline_fusion_content.content 
+        prompt = f"""
+                You are an expert podcast editor. Refine the podcast dialogue using the structured outline to ensure clarity, coherence, and engagement.
 
-                        Requirements:
-                        - Improve flow, making the conversation **more natural and engaging**.
-                        - Ensure key topics follow the structured outline.
-                        - Maintain humor and conversational tone.
-                        - Add minor improvements for storytelling.
+                Requirements:
+                - Improve flow, making the conversation **more natural and engaging**.
+                - Ensure key topics follow the structured outline.
+                - Maintain humor and conversational tone.
+                - Add minor improvements for storytelling.
 
-                        The content: <{outline_fusion_content}> 
+                The content: <{outline_fusion_content}> 
 
-                        Only provide the optimized transcript—no additional commentary or explanations.  
-                        """
-                result = self.llm(prompt)
-                return {'revision_content': result}
+                Only provide the optimized transcript—no additional commentary or explanations.  
+                """
+        result = self.llm(prompt)
+        return {'revision_content': result}
     
     def structured_podcast_dialog(self, state: PDFState):
+        print("Generating ")
         revision_content = state ['revision_content']
         if hasattr(revision_content, 'content'):
             revision_content = revision_content.content 
@@ -270,15 +279,15 @@ class Agent:
                 Keep it Conversational: Maintain a lively, natural, and engaging tone between the hosts.
                 Structure for Production: Make it easy to read aloud with clear formatting.
 
-                [Podcast Intro Music Fades In]  
-                [Host 1]: "Welcome back to *Deep Dive Talks*! Today, we’re diving into [topic]—a subject that has more depth than most people realize."  
-                [Host 2]: "[chuckles] That’s right! Did you know that [interesting fact]? It’s one of those things that once you learn, you’ll never see the same way again."  
-                [Host 1]: "Let’s start by breaking it down. [Core concept explanation]."  
-                [Host 2]: "[Pause] Exactly! And what’s really interesting is that… [Example or Story]."  
+                **Intro Music Fades In**                 
+                Alex: "Welcome back to *Deep Dive Talks*! Today, we’re diving into [topic]—a subject that has more depth than most people realize."  
+                Sam: "[chuckles] That’s right! Did you know that [interesting fact]? It’s one of those things that once you learn, you’ll never see the same way again."  
+                Alex: "Let’s start by breaking it down. [Core concept explanation]."  
+                Sam: "[Pause] Exactly! And what’s really interesting is that… [Example or Story]."  
                 ...  
-                [Host 1]: "Alright, let’s wrap things up. Today we covered [key takeaways]."  
-                [Host 2]: "Thanks for tuning in! Don’t forget to subscribe and share if you found this useful!"  
-                [Outro Music Fades Out]  
+                Alex: "Alright, let’s wrap things up. Today we covered [key takeaways]."  
+                Sam: "Thanks for tuning in! Don’t forget to subscribe and share if you found this useful!"  
+                **Outro Music Fades In**
 
                 don't include un
 
@@ -319,7 +328,7 @@ def main():
     # Print the content of the message
     result = result[state].content if hasattr(result[state], 'content') else result[state]
     print(result)
-    audio_generate(result)
+    create_audio(result)
 
 
 main()
