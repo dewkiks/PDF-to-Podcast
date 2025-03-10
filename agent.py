@@ -18,7 +18,6 @@ class PDFState(TypedDict):
     outline_fusion: AnyMessage
     revision_content: AnyMessage
     genpodcast_dialogue: AnyMessage
-    textaudio_content: AnyMessage
 
 class Agent:
     def __init__(self, model):
@@ -54,10 +53,7 @@ class Agent:
         graph.add_node("structured_podcast_dialog", self.structured_podcast_dialog) #podcast prompt 9
         graph.add_edge("create_revision","structured_podcast_dialog") #revision->podcast
 
-        graph.add_node("text_to_audio_formatting", self.text_to_audio_formatting)
-        graph.add_edge("structured_podcast_dialog","text_to_audio_formatting")
-
-        graph.add_edge("text_to_audio_formatting", END)
+        graph.add_edge("structured_podcast_dialog", END)
         graph.set_entry_point("create_outline")
 
 
@@ -302,60 +298,6 @@ class Agent:
                 """
         result = self.llm(prompt)
         return {'genpodcast_dialogue': result}
-    
-    def text_to_audio_formatting(self, state:PDFState):
-        print("Converting to tts format...")
-        print("This could take a while")
-        text_audio_content = state ['genpodcast_dialogue']
-        if hasattr(text_audio_content, 'content'):
-            text_audio_content = text_audio_content.content 
-        prompt = f"""
-                IMPORTANT: TEXT-TO-SPEECH FORMATTING GUIDELINES
-
-                Please include the following special formatting  in your podcast script to ensure the text-to-speech engine interprets emotions and speech patterns correctly:
-                Keep the formatting as it is donot change it according to your choice, like for example:
-                    DO NOT CHANGE [laughter] to [chuckles], keep the SPEECH PATTERNS AND EMOTIONAL CUES AS SPECIFIED AND AS IT IS WITHOUT CHANGE AS THE TTS ENGINE REQUIRES IT TO BE OF THE SAME FORMAT
-                SPEECH PATTERNS:
-                - Use "—" or "..." to indicate hesitations or pauses
-                - Use CAPITALIZATION to emphasize specific words
-
-                EMOTIONAL CUES:
-                - [laughter] or [laughs] for humorous moments
-                - [sighs] for expressing exhaustion, relief, or disappointment
-                - [gasps] for surprise or shock
-                - [clears throat] for transitions or emphasis
-                - [music] to indicate background music cues
-                - ♪ to surround song lyrics
-
-            THIS IS THE EXPECTED OUTPUT:
-
-            Alex: Welcome to today's episode of Tech Insights! I'm your host, and TODAY we're diving into the fascinating world of artificial intelligence.
-
-            Sam: And I'm your co-host. I've been reading about some INCREDIBLE developments in machine learning lately...
-
-            Alex: Oh, you always find the most interesting research! [laughs] What caught your attention this time?
-
-            Sam: Well... it's this new neural network architecture that's been making waves in the community. [clears throat] The researchers claim it can process information almost TWICE as fast as previous models.
-
-            Alex: Twice as fast? [gasps] That's remarkable progress in such a short time!
-
-            Sam: Exactly. And you know what they say about AI development — it never slows down, does it?
-
-            Alex: [sighs] I remember when basic image recognition was considered cutting-edge technology. Now we have AI writing poetry and composing music!
-
-            Sam: Speaking of which, I tried asking an AI to write me a birthday song yesterday and... let me tell you... the results were INTERESTING to say the least. [laughter]
-
-            Alex: I can only imagine! Was it actually good, or more of a "thanks for trying" situation?
-
-            These formatting elements are essential for creating natural-sounding, expressive audio that feels more human. Please apply them appropriately throughout the podcast script to enhance the listening experience.
-            Only provide the optimized transcript—no additional commentary or explanations.
-
-            also keep the names Alex: and Sam: with the colons same, DO NOT CHANGE THAT ASWELL
-
-            The content THAT YOU SHOULD ALTER is: <{text_audio_content}>  
-                """
-        result = self.llm(prompt)
-        return {'textaudio_content': result}
         
     def llm(self, prompt):
         # Check if prompt is already a message object - use base class instead of subscripted generic
@@ -382,7 +324,7 @@ def main():
     # Start with a simple string, not a message object
     result = agent.graph.invoke({'pdf_content': content})
     
-    state = 'textaudio_content'
+    state = 'genpodcast_dialogue'
     # Print the content of the message
     result = result[state].content if hasattr(result[state], 'content') else result[state]
     print(result)
