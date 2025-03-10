@@ -14,7 +14,7 @@ preload_models,
 from bark.api import semantic_to_waveform
 from bark import generate_audio, SAMPLE_RATE
 preload_models()
-
+from scipy.io import wavfile
 from scipy.io.wavfile import write as write_wav 
 
 class PdfRead:
@@ -93,7 +93,12 @@ def create_audio(script):
                 pieces += [audio_array, silence.copy()]
     
     write_wav("multi_host.wav", SAMPLE_RATE, np.concatenate(pieces))
+    sample_rate, data = wavfile.read("multi_host.wav")
+    data_16bit = (data / np.max(np.abs(data)) * 32767).astype(np.int16)
+    wavfile.write("multi_host_converted.wav", sample_rate, data_16bit)
+
 
 
 
 # create_audio(script)
+
