@@ -1,6 +1,6 @@
 # PDF to Podcast AI Agent
 
-![Project Banner](https://via.placeholder.com/1200x300.png?text=PDF+to+Podcast+AI+Agent)
+![Project Banner](https://github.com/DARK-Shadw/PDF-to-Podcast/blob/main/banner.jpg)
 
 Welcome to the **PDF to Podcast AI Agent**, a Python-based project that transforms PDF documents into engaging, natural-sounding podcast scripts. Using LangGraph for workflow orchestration and a large language model (LLM) from Together AI, this agent processes PDF content through multiple stages—outline creation, transcript generation, dialogue optimization, and final podcast script production. The result is a polished, production-ready podcast dialogue between two hosts, complete with sound cues and conversational flow.
 
@@ -130,10 +130,7 @@ Below is a sample of the podcast audio generated from a DBMS PDF. This audio fil
 
 **Listen to the Sample Podcast:**
 
-<audio controls>
-  <source src="converted.wav" type="audio/wav">
-  Your browser does not support the audio element.
-</audio>
+![GeneratedFile](https://github.com/DARK-Shadw/PDF-to-Podcast/blob/main/converted.wav)
 
 ---
 
