@@ -21,7 +21,7 @@ class PdfRead:
     def __init__(self, name, start=None, end=None):
         self.name = name
         # creating a pdf reader object
-        self.reader = PdfReader("PDF's/dbms.pdf")
+        self.reader = PdfReader("temp.pdf")
 
         # printing number of pages in pdf file
         page_length = len(self.reader.pages)

@@ -5,7 +5,11 @@ from langchain_core.messages import HumanMessage, SystemMessage, AnyMessage
 from langchain_together import ChatTogether
 from util import PdfRead
 from util import create_audio
+import os
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
 
 class PDFState(TypedDict):
     pdf_content: AnyMessage
@@ -21,7 +25,6 @@ class PDFState(TypedDict):
 
 class Agent:
     def __init__(self, model):
-        
         self.model = model
         graph = StateGraph(PDFState)
 
@@ -35,34 +38,28 @@ class Agent:
         graph.add_node("create_deep_dive", self.create_deep_dive)
         graph.add_edge("create_segment_transcript", "create_deep_dive")
 
-        # graph.add_edge("create_deep_dive", END)
-        # graph.set_entry_point("create_outline")
-
-        graph.add_node("transcript_optimization", self.transcript_optimization) #prompt 5
+        graph.add_node("transcript_optimization", self.transcript_optimization)
         graph.add_edge("create_deep_dive","transcript_optimization")
 
-        graph.add_node("create_podcast_dialogue", self.create_podcast_dialog) #podcast dialogue creation prompt 6
-        graph.add_edge("transcript_optimization","create_podcast_dialogue") #transcript opt -> create pod dialogue
+        graph.add_node("create_podcast_dialogue", self.create_podcast_dialog)
+        graph.add_edge("transcript_optimization","create_podcast_dialogue")
 
-        graph.add_node("create_outline_fusion",self.create_outline_fusion) #prompt 7
-        graph.add_edge("create_podcast_dialogue","create_outline_fusion") #create podcast dialogue->outline fusion
+        graph.add_node("create_outline_fusion",self.create_outline_fusion)
+        graph.add_edge("create_podcast_dialogue","create_outline_fusion")
 
-        graph.add_node("create_revision", self.create_revision) #revision prompt 8
-        graph.add_edge("create_outline_fusion","create_revision") #outline_fusion-> revision
+        graph.add_node("create_revision", self.create_revision)
+        graph.add_edge("create_outline_fusion","create_revision")
 
-        graph.add_node("structured_podcast_dialog", self.structured_podcast_dialog) #podcast prompt 9
-        graph.add_edge("create_revision","structured_podcast_dialog") #revision->podcast
+        graph.add_node("structured_podcast_dialog", self.structured_podcast_dialog)
+        graph.add_edge("create_revision","structured_podcast_dialog")
 
         graph.add_edge("structured_podcast_dialog", END)
         graph.set_entry_point("create_outline")
 
-
         self.graph = graph.compile()
-    
     
     def create_outline(self, state: PDFState):
         print("Generating Outline")
-        # Get the content in a safer way
         pdf_content = state['pdf_content']
         if hasattr(pdf_content, 'content'):
             pdf_content = pdf_content.content
@@ -131,7 +128,6 @@ class Agent:
     
     def create_deep_dive(self, state: PDFState):
         print("Creating a Deep Dive")
-
         deep_content = state['segment_transcript']
         if hasattr(deep_content, 'content'):
             deep_content = deep_content.content
@@ -141,7 +137,6 @@ class Agent:
             Your role is to add depth, nuance, and additional content to import sections in a transcript provided. 
             The transcript will be a transcript for a podcast between 2 people talking about some content. You should carefully analyze the transcript.
             Find important topics or sections and provide in depth information for it. You should add depth to the content, provide analogies, provide backgroud informations and create suitable examples.
-
 
             The expected result is a a Enhaced content or transcipt with detailed explanations and insights.
             The content is provided below between the angle brackets.
@@ -154,7 +149,6 @@ class Agent:
     
     def transcript_optimization(self, state:PDFState):
         print("Optimizing Transcript")
-
         transcript_content= state['deep_dive']
         if hasattr(transcript_content, 'content'):
             transcript_content = transcript_content.content
@@ -190,7 +184,6 @@ class Agent:
         if hasattr(podcast_content, 'content'):
             podcast_content = podcast_content.content 
         prompt = f"""
-
                 this is the transcript content you should work with <{podcast_content}>
 
                 You are an expert in podcast scriptwriting and conversational structuring. Your task is to take the provided transcript and turn it into a highly engaging, natural-sounding podcast dialogue between two speakers.
@@ -220,7 +213,6 @@ class Agent:
         if hasattr(outline_content, 'content'):
             outline_content = outline_content.content 
         prompt = f"""
-
                 this is the transcript content you should work with <{outline_content}>
 
                 You are an expert in podcast scriptwriting and conversational structuring. Your task is to take the provided transcript and turn it into a highly engaging, natural-sounding podcast dialogue between two speakers.
@@ -290,8 +282,6 @@ class Agent:
                 Sam: "Thanks for tuning in! Don’t forget to subscribe and share if you found this useful!"  
                 **Outro Music Fades In**
 
-                don't include un
-
                 The content: <{revision_content}> 
 
                 Only provide the optimized transcript—no additional commentary or explanations.  
@@ -300,35 +290,36 @@ class Agent:
         return {'genpodcast_dialogue': result}
         
     def llm(self, prompt):
-        # Check if prompt is already a message object - use base class instead of subscripted generic
         if not isinstance(prompt, (dict, str)) and hasattr(prompt, 'content'):
-            # It's already a message object
             message = prompt
         else:
-            # If it's a string or other type, convert it to a HumanMessage
             message = HumanMessage(content=str(prompt))
         
-        # Make sure we're invoking with the right format for Together AI
         return self.model.invoke([message])
     
 
 def main():
+    # Retrieve API key from environment variables
+    together_api_key = os.getenv("TOGETHER_API_KEY")
+    if not together_api_key:
+        raise ValueError("TOGETHER_API_KEY not found in environment variables")
+
     llm = ChatTogether(
         model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
-        together_api_key="84e8df9a595039765758ae96105665d37e873e9619a2c209ee31a108db5875ef"
+        together_api_key=together_api_key
     )
-    pdf = PdfRead("PDF's/dbms.pdf")
+    pdf = PdfRead("temp.pdf")
     content = pdf.get_text()
     agent = Agent(llm)
     
-    # Start with a simple string, not a message object
     result = agent.graph.invoke({'pdf_content': content})
     
     state = 'genpodcast_dialogue'
-    # Print the content of the message
     result = result[state].content if hasattr(result[state], 'content') else result[state]
-    print(result)
-    create_audio(result)
+    # print(result)
+    return result
+    # create_audio(result)
 
 
-main()
+# if __name__ == "__main__":
+#     main()
