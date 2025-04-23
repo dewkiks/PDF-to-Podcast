@@ -190,12 +190,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ---
 
-## Acknowledgments
-
-- **Together AI**: For providing the LLM backend.
-- **LangGraph**: For enabling structured workflows.
-- **xAI**: For inspiring AI-driven innovation through tools like Grok.
-
----
-
 Happy podcasting! 🎙️
