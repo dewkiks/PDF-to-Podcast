@@ -14,6 +14,7 @@ This project is ideal for educators, content creators, or developers looking to 
 - [How It Works](#how-it-works)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Example Output](#example-output)
 - [Project Structure](#project-structure)
 - [Dependencies](#dependencies)
 - [Environment Variables](#environment-variables)
@@ -123,11 +124,25 @@ Follow these steps to set up the project locally:
 
 ---
 
+## Example Output
+
+Below is a sample of the podcast audio generated from a DBMS PDF. This audio file, `converted.wav`, was created using the `create_audio` utility after processing the PDF through the AI agent workflow.
+
+**Listen to the Sample Podcast:**
+
+<audio controls>
+  <source src="converted.wav" type="audio/wav">
+  Your browser does not support the audio element.
+</audio>
+
+---
+
 ## Project Structure
 
 ```
 pdf-to-podcast/
 ├── PDFs/                 # Directory for input PDF files
+├── converted.wav         # Sample podcast audio output
 ├── util.py               # Utilities for PDF reading and audio generation
 ├── main.py               # Main script with LangGraph workflow
 ├── requirements.txt      # Project dependencies
@@ -188,6 +203,12 @@ Please ensure your code follows PEP 8 style guidelines and includes tests where 
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
+---
+
+## Acknowledgments
+
+- **Together AI**: For providing the LLM backend.
+- **LangGraph**: For enabling structured workflows.
 ---
 
 Happy podcasting! 🎙️
