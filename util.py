@@ -21,9 +21,9 @@ class PdfRead:
         self.reader = PdfReader("PDF's/temp.pdf")
         # printing number of pages in pdf file
         # page_length = len(self.reader.pages)
-        # print(len(self.reader.pages))
+        print(len(self.reader.pages))
 
-        page_length = 2 # PAGE LENGTH DEFAULTED TO 2 AS WE HAVE LIMITED RESOURCES, THIS WAS MADE FOR CLOUD RUNNING SO THAT PEOPLE CAN TEST IT OUT
+        page_length = min(2, len(self.reader.pages)) # PAGE LENGTH DEFAULTED TO 2 AS WE HAVE LIMITED RESOURCES, THIS WAS MADE FOR CLOUD RUNNING SO THAT PEOPLE CAN TEST IT OUT
 
         self.text = ""
         begin = 0
