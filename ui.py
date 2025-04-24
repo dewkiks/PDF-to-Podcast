@@ -78,6 +78,7 @@ def generate_audio(text_input):
             create_audio(text_input, voice, voice2, status_callback=status_callback)
             st.audio("audio/multi_host_converted.wav", format="audio/wav")
             fading_success("Audio generated successfully!")
+            st.download_button("Download Audio", "audio/multi_host_converted.wav", file_name="podcast.wav", mime="audio/wav")
 
 if __name__ == "__main__":
     generate_script_from_pdf()
