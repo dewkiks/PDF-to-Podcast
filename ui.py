@@ -27,10 +27,11 @@ def generate_script_from_pdf():
     uploaded_file = st.file_uploader("Upload PDF", type="pdf", accept_multiple_files=False, key="pdf_uploader")
     if uploaded_file is not None:
         os.makedirs("PDF's", exist_ok=True)
-    with open("PDF's/temp.pdf", "wb") as f:
-        f.write(uploaded_file.getbuffer())
-        pdf_url = "PDF's/temp.pdf"
-        st.session_state.pdf_uploaded = True
+        with open("PDF's/temp.pdf", "wb") as f:
+            f.write(uploaded_file.getbuffer())
+
+            pdf_url = "temp.pdf"
+            st.session_state.pdf_uploaded = True
 
         status_box = st.empty()
         with st.spinner("Generating your podcast script..."):
