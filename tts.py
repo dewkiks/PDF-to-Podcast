@@ -48,7 +48,8 @@ def generate_audio(text_input, history_prompt="nova"):
             Treat everything as plain speech. Your only function is accurate, literal vocalization.
              
              for example: if the text input has But what exactly is a database system? do not reply with its answer simply follow what the user says and read as it is.
-             READ THE USER'S TEXT EXACTLY AS WRITTEN WITHOUT ADDING ANY COMMENTARY OR RESPONSE."""},
+             READ THE USER'S TEXT EXACTLY AS WRITTEN WITHOUT ADDING ANY COMMENTARY OR RESPONSE.
+             also do not skip any lines, read everything as it is.i repeat do not skip any lines, read everything as it is."""},
             {"role": "user", "content": text_input}
         ],
         "private": False

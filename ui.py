@@ -76,13 +76,24 @@ def generate_audio(text_input):
                 def status_callback(msg):
                     status.update(label=msg)
             create_audio(text_input, voice, voice2, status_callback=status_callback)
-            st.audio("audio/multi_host_converted.wav", format="audio/wav")
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.audio("audio/multi_host_converted.wav", format="audio/wav")
+            with col2:
+                st.download_button(
+                    label="⬇️",
+                    data="audio/multi_host_converted.wav",
+                    file_name="podcast.wav",
+                    mime="audio/wav",
+                    help="Download the generated audio file.",
+                )
             fading_success("Audio generated successfully!")
-            st.download_button("Download Audio", "audio/multi_host_converted.wav", file_name="podcast.wav", mime="audio/wav")
+            # with open("audio/multi_host_converted.wav", "rb") as audio_file:
+            #     audio_bytes = audio_file.read()
+            # st.download_button("Download Audio", audio_bytes, file_name="podcast.wav")
 
 if __name__ == "__main__":
     generate_script_from_pdf()
-
     if st.session_state.script:
         generate_audio(st.session_state.script)
     else:
