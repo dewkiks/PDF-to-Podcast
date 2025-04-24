@@ -268,11 +268,8 @@ class Agent:
 
                 also strip the content of anything that states like this or similar of the following:
                     -[Soft music transition]
-                    -[Laughter]
-                    -[Pause]
                     -[Music fades out]
                     -[Music fades in]
-                    -[Dramatic pause]
                     etc...
                 
                 Only provide the optimized transcript—no additional commentary or explanations.  
@@ -287,43 +284,42 @@ class Agent:
         if hasattr(revision_content, 'content'):
             revision_content = revision_content.content 
         prompt = f"""
-                Podcast Script Generation
-                You are an expert podcast scriptwriter. Your task is to take the refined podcast dialogue and transform it into a final, polished podcast script that is ready for production.
+                    🎙️ Podcast Script Generation
 
-                Objectives:
-                Ensure Broadcast Readiness: The final output should sound professional and engaging, as if recorded for a real podcast.
-                Enhance Flow & Delivery: Adjust pacing, sentence structure, and transitions for a smooth listening experience.
-                Add Sound Cues & Pauses: Include [music fades in], [dramatic pause], or [laughter] to make the script more dynamic.
-                Keep it Conversational: Maintain a lively, natural, and engaging tone between the hosts.
-                Structure for Production: Make it easy to read aloud with clear formatting.
-            
-                and make sure the output format has Alex and Sam as the speakers
+                    You are a professional podcast scriptwriter tasked with transforming refined dialogue into a final, production-ready podcast script.
 
-                The expected output:
+                    Objectives:
+                    - Broadcast-Ready Quality: Ensure the final script sounds polished, professional, and ready to be recorded as a real podcast.
+                    - Natural Conversational Flow: Structure the dialogue as an engaging back-and-forth between two co-hosts, Alex and Sam.
+                    - Dynamic & Expressive: Enhance pacing, sentence structure, and transitions for smooth delivery. Use elements like [music fades in], [dramatic pause], or [laughter] to enrich the audio experience.
+                    - Interactive Dialogue: Make it lively by having the hosts ask each other questions, share reactions, and refer to one another by name throughout the episode.
+                    - Clean & Easy Formatting: Format the script clearly, with speaker names and spacing that make it easy to read aloud during production.
 
-                    Alex: "Welcome back to *Deep Dive Talks*! Today, we’re diving into [topic]—a subject that has more depth than most people realize."  
-                    
-                    Sam: "[chuckles] That’s right! Did you know that [interesting fact]? It’s one of those things that once you learn, you’ll never see the same way again."  
-                    
-                    Alex: "Let’s start by breaking it down. [Core concept explanation]."  
-                    
-                    Sam: "[Pause] Exactly! And what’s really interesting is that… [Example or Story]."  
-                    ...  
-                    Alex: "Alright, let’s wrap things up. Today we covered [key takeaways]."  
-                    
-                    Sam: "Thanks for tuning in! Don’t forget to subscribe and share if you found this useful!"  
-                    
-                    Only provide the optimized transcript—no additional commentary or explanations.  
+                    Content Cleanup:
+                    - Strip placeholder directions such as: [Soft music transition], [Music fades out], [Music fades in], [Dramatic pause], etc.
+                    - Keep meaningful sound cues that contribute to the production quality (e.g., [music fades in], [laughter], [dramatic pause]).
+                    - Preserve natural silences and formatting that support pacing and tone.
 
-                The content: <{revision_content}> 
+                    Expected Output Format:
 
-                also strip the content of anything that states like this or similar of the following but donot clear the required silences and keep the formatting as it is, :
-                    -[Soft music transition]
-                    -[Music fades out]
-                    -[Music fades in]
-                    -[Dramatic pause]
-                    etc...
-                """
+                    Alex: "Welcome back to *Deep Dive Talks*! Today, we’re diving into [topic]—a subject that has more depth than most people realize."
+
+                    Sam: "[chuckles] That’s right! Did you know that [interesting fact]? It’s one of those things that once you learn, you’ll never see the same way again."
+
+                    Alex: "Let’s start by breaking it down. [Core concept explanation]"
+
+                    Sam: "[Pause] Exactly! And what’s really interesting is that… [Example or Story]"
+
+                    ...
+
+                    Alex: "Alright, let’s wrap things up. Today we covered [key takeaways]."
+
+                    Sam: "Thanks for tuning in! Don’t forget to subscribe and share if you found this useful!"
+
+                    Now, using the following content, generate a polished podcast script as described above:
+
+                    <{revision_content}>
+                    """
         result = self.llm(prompt)
         return {'genpodcast_dialogue': result}
         
