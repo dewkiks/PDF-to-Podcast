@@ -25,7 +25,7 @@ def generate_script_from_pdf():
     st.markdown("Upload your PDF file to directly convert it to a podcast.")
     
     uploaded_file = st.file_uploader("Upload PDF", type="pdf", accept_multiple_files=False, key="pdf_uploader")
-    if uploaded_file is not None:
+    if uploaded_file is not None and not st.session_state.pdf_uploaded:
         os.makedirs("PDF's", exist_ok=True)
         with open("PDF's/temp.pdf", "wb") as f:
             f.write(uploaded_file.getbuffer())
