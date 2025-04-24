@@ -10,8 +10,6 @@ if 'script' not in st.session_state:
     st.session_state.script = None
 if 'pdf_uploaded' not in st.session_state:
     st.session_state.pdf_uploaded = False
-if "last_uploaded_filename" not in st.session_state:
-    st.session_state.last_uploaded_filename = None
 
 
 def fading_success(message, delay=3):
@@ -28,20 +26,12 @@ def generate_script_from_pdf():
     st.markdown("**Note:** The PDF will be read only from the first 2 pages due to limited resources.")
     
     uploaded_file = st.file_uploader(" ", type="pdf", accept_multiple_files=False, key="pdf_uploader")
-    if uploaded_file is not None:
-    # If it's a new file (name has changed), reset relevant session state
-        if uploaded_file.name != st.session_state.last_uploaded_filename:
-            for key in ["summary", "chunks", "vectorstore", "processed_text"]:
-                if key in st.session_state:
-                    del st.session_state[key]
-            st.session_state.last_uploaded_filename = uploaded_file.name
-            st.session_state.pdf_uploaded = False
+    if uploaded_file is not None and not st.session_state.pdf_uploaded:
+        os.makedirs("PDF's", exist_ok=True)
+        with open("PDF's/temp.pdf", "wb") as f:
+            f.write(uploaded_file.getbuffer())
 
-        if not st.session_state.pdf_uploaded:
-            os.makedirs("PDF's", exist_ok=True)
-            with open("PDF's/temp.pdf", "wb") as f:
-                f.write(uploaded_file.getbuffer())
-                pdf_url = "temp.pdf"
+            pdf_url = "temp.pdf"
             st.session_state.pdf_uploaded = True
 
         status_box = st.empty()

@@ -52,6 +52,17 @@ def generate_audio(text_input, history_prompt="nova"):
              also do not skip any lines, read everything as it is.i repeat do not skip any lines, read everything as it is."""},
             {"role": "user", "content": text_input}
         ],
+        "instructions": """Voice Affect: Soft, gentle, soothing; embody tranquility.
+
+                        Tone: Calm, reassuring, peaceful; convey genuine warmth and serenity.
+
+                        Pacing: Slow, deliberate, unhurried; pause gently after instructions to allow listeners time to relax and follow along.
+
+                        Emotion: Deeply soothing, comforting; express genuine kindness and care.
+
+                        Pronunciation: Smooth, soft articulation, slightly elongating vowels to create ease.
+
+                        Pauses: Thoughtful pauses, especially between breathing instructions and guidance, enhancing relaxation and mindfulness.""",
         "private": False
     }
     headers = {"Content-Type": "application/json"}
