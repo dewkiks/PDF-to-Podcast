@@ -2,6 +2,7 @@ from urllib import response
 import streamlit as st
 import time
 import agent
+import os
 from util import create_audio
 
  # Initialize session state
@@ -23,13 +24,12 @@ def generate_script_from_pdf():
     st.title("PDF to Podcast")
     st.markdown("Upload your PDF file to directly convert it to a podcast.")
     
-    pdf_file = st.file_uploader("Upload PDF", type="pdf", accept_multiple_files=False, key="pdf_uploader")
-    
-    if pdf_file is not None and not st.session_state.pdf_uploaded:
-        # Save the uploaded PDF
-        with open("temp.pdf", "wb") as f:
-            f.write(pdf_file.getbuffer())
-        pdf_url = "temp.pdf"
+    uploaded_file = st.file_uploader("Upload PDF", type="pdf", accept_multiple_files=False, key="pdf_uploader")
+    if uploaded_file is not None:
+        os.makedirs("PDF's", exist_ok=True)
+    with open("PDF's/temp.pdf", "wb") as f:
+        f.write(uploaded_file.getbuffer())
+        pdf_url = "PDF's/temp.pdf"
         st.session_state.pdf_uploaded = True
 
         status_box = st.empty()
