@@ -13,6 +13,7 @@ from scipy.io.wavfile import write as write_wav
 
 SAMPLE_RATE = 24000
 
+os.makedirs("PDF's", exist_ok=True)
 class PdfRead:
     def __init__(self, name, start=None, end=None, status_callback=None):
         self.name = name
