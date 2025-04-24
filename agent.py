@@ -3,13 +3,19 @@ import operator
 from langgraph.graph import StateGraph, END
 from langchain_core.messages import HumanMessage, SystemMessage, AnyMessage
 from langchain_together import ChatTogether
-from util import PdfRead
-from util import create_audio
+from util import PdfRead, create_audio
 import os
+import asyncio
+import sys
+import streamlit as st
+if sys.platform.startswith('win'):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
 
 class PDFState(TypedDict):
     pdf_content: AnyMessage
@@ -24,8 +30,9 @@ class PDFState(TypedDict):
     genpodcast_dialogue: AnyMessage
 
 class Agent:
-    def __init__(self, model):
+    def __init__(self, model, status_callback=None):
         self.model = model
+        self.status_callback = status_callback or (lambda msg: None)
         graph = StateGraph(PDFState)
 
         graph.add_node("create_outline", self.create_outline)
@@ -59,6 +66,7 @@ class Agent:
         self.graph = graph.compile()
     
     def create_outline(self, state: PDFState):
+        self.status_callback("Generating Outline")
         print("Generating Outline")
         pdf_content = state['pdf_content']
         if hasattr(pdf_content, 'content'):
@@ -78,6 +86,7 @@ class Agent:
         return {'outline': result}
 
     def create_structured_outline(self, state: PDFState):
+        self.status_callback("Generating Structured Outline")
         print("Generating Structured Outline")
         outline_content = state['outline']
         if hasattr(outline_content, 'content'):
@@ -101,6 +110,7 @@ class Agent:
         return {'structured_outline': result}
     
     def create_segment_transcript(self, state: PDFState):
+        self.status_callback("Generating Segment Transcript")
         print("Generating Segment Transcript")
         segment_content = state['structured_outline']
         if hasattr(segment_content, 'content'):
@@ -113,8 +123,8 @@ class Agent:
             So from the provided data look into each segments and for each segments you should convert it into a natural sounding spoke language, add more detail, match the style of a podcast between 2 people.
             Your output should look like this:
             example:
-                Person 1: "Hello listeners, and welcome to today's episode! Have you ever wondered ..."
-                Person 2: "I'm really excited about this topic. Most people have heard ..."
+                Alex: "Hello listeners, and welcome to today's episode! Have you ever wondered ..."
+                Sam: "I'm really excited about this topic. Most people have heard ..."
 
             The content is provided between the angle brackets.
 
@@ -127,6 +137,7 @@ class Agent:
         return {'segment_transcript': result}
     
     def create_deep_dive(self, state: PDFState):
+        self.status_callback("Creating a Deep Dive")
         print("Creating a Deep Dive")
         deep_content = state['segment_transcript']
         if hasattr(deep_content, 'content'):
@@ -148,6 +159,7 @@ class Agent:
         return {'deep_dive': result}
     
     def transcript_optimization(self, state:PDFState):
+        self.status_callback("Optimizing Transcript")
         print("Optimizing Transcript")
         transcript_content= state['deep_dive']
         if hasattr(transcript_content, 'content'):
@@ -179,6 +191,7 @@ class Agent:
         return {'transcript':result}
     
     def create_podcast_dialog(self, state: PDFState):
+        self.status_callback("Generating Podcast Dialog")
         print("Generating podcast dialog's")
         podcast_content = state ['transcript']
         if hasattr(podcast_content, 'content'):
@@ -208,6 +221,7 @@ class Agent:
         return {'podcast_dialogue': result}
     
     def create_outline_fusion(self, state: PDFState):
+        self.status_callback("Creating an outline")
         print("Creating an outline")
         outline_content = state ['podcast_dialogue']
         if hasattr(outline_content, 'content'):
@@ -237,6 +251,7 @@ class Agent:
         return {'outline_fusion': result}
     
     def create_revision(self, state:PDFState):
+        self.status_callback("Creating a revision")
         outline_fusion_content = state ['outline_fusion']
         if hasattr(outline_fusion_content, 'content'):
             outline_fusion_content = outline_fusion_content.content 
@@ -251,12 +266,22 @@ class Agent:
 
                 The content: <{outline_fusion_content}> 
 
+                also strip the content of anything that states like this or similar of the following:
+                    -[Soft music transition]
+                    -[Laughter]
+                    -[Pause]
+                    -[Music fades out]
+                    -[Music fades in]
+                    -[Dramatic pause]
+                    etc...
+                
                 Only provide the optimized transcript—no additional commentary or explanations.  
                 """
         result = self.llm(prompt)
         return {'revision_content': result}
     
     def structured_podcast_dialog(self, state: PDFState):
+        self.status_callback("Finalizing Podcast Dialog")
         print("Generating ")
         revision_content = state ['revision_content']
         if hasattr(revision_content, 'content'):
@@ -271,20 +296,29 @@ class Agent:
                 Add Sound Cues & Pauses: Include [music fades in], [dramatic pause], or [laughter] to make the script more dynamic.
                 Keep it Conversational: Maintain a lively, natural, and engaging tone between the hosts.
                 Structure for Production: Make it easy to read aloud with clear formatting.
-
-                **Intro Music Fades In**                 
-                Alex: "Welcome back to *Deep Dive Talks*! Today, we’re diving into [topic]—a subject that has more depth than most people realize."  
-                Sam: "[chuckles] That’s right! Did you know that [interesting fact]? It’s one of those things that once you learn, you’ll never see the same way again."  
-                Alex: "Let’s start by breaking it down. [Core concept explanation]."  
-                Sam: "[Pause] Exactly! And what’s really interesting is that… [Example or Story]."  
-                ...  
-                Alex: "Alright, let’s wrap things up. Today we covered [key takeaways]."  
-                Sam: "Thanks for tuning in! Don’t forget to subscribe and share if you found this useful!"  
-                **Outro Music Fades In**
+            
+                
 
                 The content: <{revision_content}> 
 
-                Only provide the optimized transcript—no additional commentary or explanations.  
+                also strip the content of anything that states like this or similar of the following:
+                    -[Soft music transition]
+                    -[Laughter]
+                    -[Pause]
+                    -[Music fades out]
+                    -[Music fades in]
+                    -[Dramatic pause]
+                    etc...
+                
+                and make sure the output format has Alex and Sam as the speakers and the content should be in a format like this, you may alter the content they say but keep the speaker the same:
+                    Alex: "Welcome back to *Deep Dive Talks*! Today, we’re diving into [topic]—a subject that has more depth than most people realize."  
+                    Sam: "[chuckles] That’s right! Did you know that [interesting fact]? It’s one of those things that once you learn, you’ll never see the same way again."  
+                    Alex: "Let’s start by breaking it down. [Core concept explanation]."  
+                    Sam: "[Pause] Exactly! And what’s really interesting is that… [Example or Story]."  
+                    ...  
+                    Alex: "Alright, let’s wrap things up. Today we covered [key takeaways]."  
+                    Sam: "Thanks for tuning in! Don’t forget to subscribe and share if you found this useful!"  
+                    Only provide the optimized transcript—no additional commentary or explanations.  
                 """
         result = self.llm(prompt)
         return {'genpodcast_dialogue': result}
@@ -298,7 +332,8 @@ class Agent:
         return self.model.invoke([message])
     
 
-def main():
+def main(status_callback=lambda msg: None):
+    status_callback("Initializing...")
     # Retrieve API key from environment variables
     together_api_key = os.getenv("TOGETHER_API_KEY")
     if not together_api_key:
@@ -308,18 +343,18 @@ def main():
         model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
         together_api_key=together_api_key
     )
-    pdf = PdfRead("temp.pdf")
+    pdf = PdfRead("PDF's/temp.pdf")
     content = pdf.get_text()
-    agent = Agent(llm)
+    agent = Agent(llm, status_callback=status_callback)
     
     result = agent.graph.invoke({'pdf_content': content})
     
     state = 'genpodcast_dialogue'
     result = result[state].content if hasattr(result[state], 'content') else result[state]
     # print(result)
-    return result
     # create_audio(result)
+    return result
 
 
 # if __name__ == "__main__":
-#     main()
+#      main()
