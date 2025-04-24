@@ -297,19 +297,6 @@ class Agent:
                 Keep it Conversational: Maintain a lively, natural, and engaging tone between the hosts.
                 Structure for Production: Make it easy to read aloud with clear formatting.
             
-                
-
-                The content: <{revision_content}> 
-
-                also strip the content of anything that states like this or similar of the following:
-                    -[Soft music transition]
-                    -[Laughter]
-                    -[Pause]
-                    -[Music fades out]
-                    -[Music fades in]
-                    -[Dramatic pause]
-                    etc...
-                
                 and make sure the output format has Alex and Sam as the speakers and the content should be in a format like this, you may alter the content they say but keep the speaker the same:
                     Alex: "Welcome back to *Deep Dive Talks*! Today, we’re diving into [topic]—a subject that has more depth than most people realize."  
                     Sam: "[chuckles] That’s right! Did you know that [interesting fact]? It’s one of those things that once you learn, you’ll never see the same way again."  
@@ -319,6 +306,17 @@ class Agent:
                     Alex: "Alright, let’s wrap things up. Today we covered [key takeaways]."  
                     Sam: "Thanks for tuning in! Don’t forget to subscribe and share if you found this useful!"  
                     Only provide the optimized transcript—no additional commentary or explanations.  
+
+                The content: <{revision_content}> 
+
+                also strip the content of anything that states like this or similar of the following but donot clear the required silences and keep the formatting as it is, :
+                    -[Soft music transition]
+                    -[Laughter]
+                    -[Pause]
+                    -[Music fades out]
+                    -[Music fades in]
+                    -[Dramatic pause]
+                    etc...
                 """
         result = self.llm(prompt)
         return {'genpodcast_dialogue': result}
