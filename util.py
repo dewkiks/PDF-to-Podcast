@@ -7,6 +7,7 @@ os.environ["SUNO_USE_SMALL_MODELS"] = "1"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import streamlit as st
 import nltk
+nltk.download('punkt')
 from tts import generate_audio
 from scipy.io import wavfile
 from scipy.io.wavfile import write as write_wav 
