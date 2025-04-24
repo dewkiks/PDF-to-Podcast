@@ -3,6 +3,7 @@ import operator
 from langgraph.graph import StateGraph, END
 from langchain_core.messages import HumanMessage, SystemMessage, AnyMessage
 from langchain_together import ChatTogether
+
 from util import PdfRead, create_audio
 import os
 import asyncio
@@ -12,10 +13,8 @@ if sys.platform.startswith('win'):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from dotenv import load_dotenv
-
 # Load environment variables from .env file
 load_dotenv()
-
 
 class PDFState(TypedDict):
     pdf_content: AnyMessage
@@ -31,6 +30,7 @@ class PDFState(TypedDict):
 
 class Agent:
     def __init__(self, model, status_callback=None):
+
         self.model = model
         self.status_callback = status_callback or (lambda msg: None)
         graph = StateGraph(PDFState)
@@ -286,8 +286,6 @@ class Agent:
         prompt = f"""
                     🎙️ Podcast Script Generation
 
-                    You are a professional podcast scriptwriter tasked with transforming refined dialogue into a final, production-ready podcast script.
-
                     Objectives:
                     - Broadcast-Ready Quality: Ensure the final script sounds polished, professional, and ready to be recorded as a real podcast.
                     - Natural Conversational Flow: Structure the dialogue as an engaging back-and-forth between two co-hosts, Alex and Sam.
@@ -332,8 +330,10 @@ class Agent:
         return self.model.invoke([message])
     
 
+
 def main(status_callback=lambda msg: None):
     status_callback("Initializing...")
+
     # Retrieve API key from environment variables
     together_api_key = os.getenv("TOGETHER_API_KEY")
     if not together_api_key:
@@ -355,6 +355,6 @@ def main(status_callback=lambda msg: None):
     # create_audio(result)
     return result
 
-
 # if __name__ == "__main__":
 #      main()
+
