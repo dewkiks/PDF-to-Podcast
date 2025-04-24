@@ -80,13 +80,14 @@ def apply_fade(audio_array, fade_ms=30):
 
 def create_audio(script, voice1, voice2,status_callback=lambda x: None):
     print("Starting Audio generation...")
-    status_callback("🔄 Starting audio generation...")
+    status_callback("Starting audio generation...")
     script = script.strip().split("\n")
     speaker_lookup = {"Alex": voice1, "Sam": voice2}
     host_line_count = {"Alex": 0, "Sam": 0}
     silence = np.zeros(int(0.25 * SAMPLE_RATE))  # quarter second of silence
     pieces = []
-
+    dialogue_lines = [line for line in script if line and not line.startswith("**") and ":" in line]
+    total_dialogue = len(dialogue_lines)
     for line in script:
         if line and not line.startswith("**"):
             host_name = line.split(":")[0]
@@ -94,7 +95,7 @@ def create_audio(script, voice1, voice2,status_callback=lambda x: None):
                 host_line_count[host_name] += 1
                 SPEAKER = speaker_lookup[host_name]
                 print(f"Processing {host_name}'s #{host_line_count[host_name]} line:")
-                status_callback(f"Processing {host_name}'s #{host_line_count[host_name]} line:")
+                status_callback(f"Processing {host_name}'s #{host_line_count[host_name]} line out of {total_dialogue}...")
             else:
                 SPEAKER = "alloy"
                 print(f"Processing additional line:")

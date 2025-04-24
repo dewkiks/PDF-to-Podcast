@@ -23,8 +23,9 @@ def generate_script_from_pdf():
     """Generate a podcast script from an uploaded PDF."""
     st.title("PDF to Podcast")
     st.markdown("Upload your PDF file to directly convert it to a podcast.")
+    st.markdown("**Note:** The PDF will be read only from the first 2 pages due to limited resources.")
     
-    uploaded_file = st.file_uploader("Upload PDF", type="pdf", accept_multiple_files=False, key="pdf_uploader")
+    uploaded_file = st.file_uploader(" ", type="pdf", accept_multiple_files=False, key="pdf_uploader")
     if uploaded_file is not None and not st.session_state.pdf_uploaded:
         os.makedirs("PDF's", exist_ok=True)
         with open("PDF's/temp.pdf", "wb") as f:
@@ -63,10 +64,10 @@ def generate_audio(text_input):
         st.warning("No script available to generate audio.")
         return
     
-    voice = st.selectbox("Select Voice", 
+    voice = st.selectbox("Select Voice for Alex", 
                          ["alloy", "echo", "fable", "onyx", "nova", "shimmer"],
                          key="voice_select")
-    voice2 = st.selectbox("Select Voice 2", 
+    voice2 = st.selectbox("Select Voice for Sam", 
                          ["alloy", "echo", "fable", "onyx", "nova", "shimmer"],
                          key="voice2_select")
     
